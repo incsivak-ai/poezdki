@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>🚗 Максим — Мои поездки</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+:root { --bg:#0c0c10; --card:#15151c; --border:#252530; --blue:#5b8ef7; --green:#4ecb8c; --red:#e85b5b; --accent:#f7c948; --text:#eeeef2; --muted:#6b6b80; }
+body { background:var(--bg); color:var(--text); font-family:'Manrope',sans-serif; min-height:100vh; padding:24px 16px 60px; }
+.wrap { max-width:420px; margin:0 auto; }
+header { text-align:center; margin-bottom:28px; }
+.avatar { width:64px; height:64px; border-radius:20px; background:linear-gradient(135deg,#1e2535,#131a2e); display:flex; align-items:center; justify-content:center; font-size:2rem; margin:0 auto 12px; border:2px solid var(--blue); }
+h1 { font-family:'Unbounded',sans-serif; font-size:1.3rem; font-weight:900; color:var(--blue); }
+.sub { color:var(--muted); font-size:0.8rem; margin-top:4px; }
+.balance-big { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:24px; text-align:center; margin-bottom:16px; position:relative; overflow:hidden; }
+.balance-big::before { content:''; position:absolute; top:0;left:0;right:0; height:3px; background:linear-gradient(90deg,var(--blue),var(--green)); }
+.bal-label { font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+.bal-value { font-family:'Unbounded',sans-serif; font-size:2.2rem; font-weight:900; }
+.bal-sub { font-size:0.8rem; color:var(--muted); margin-top:6px; }
+.stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px; }
+.stat { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; }
+.stat-label { font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+.stat-val { font-family:'Unbounded',sans-serif; font-size:1.2rem; font-weight:700; }
+.section-title { font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; }
+.entries { display:flex; flex-direction:column; gap:8px; }
+.entry { background:var(--card); border:1px solid var(--border); border-radius:13px; padding:13px 14px; display:flex; align-items:center; gap:11px; }
+.entry.payment { background:#121b18; border-color:#1d3327; }
+.entry-icon { width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+.entry.ride .entry-icon { background:#1e2535; }
+.entry.payment .entry-icon { background:#1a2e24; }
+.entry-date { font-size:0.72rem; color:var(--muted); }
+.entry-desc { font-size:0.88rem; font-weight:600; }
+.entry-amount { font-family:'Unbounded',sans-serif; font-size:0.9rem; font-weight:700; flex-shrink:0; margin-left:auto; }
+.entry.ride .entry-amount { color:var(--blue); }
+.entry.payment .entry-amount { color:var(--green); }
+.empty { text-align:center; color:var(--muted); padding:40px 0; }
+.loading { text-align:center; color:var(--muted); padding:60px 0; }
+.refresh-btn { display:block; margin:16px auto 0; background:none; border:1px solid var(--border); color:var(--muted); font-family:'Manrope',sans-serif; font-size:0.8rem; padding:8px 18px; border-radius:10px; cursor:pointer; }
+.refresh-btn:hover { border-color:var(--blue); color:var(--blue); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="avatar">👨</div>
+    <h1>Максим</h1>
+    <div class="sub">Мои поездки и баланс</div>
+  </header>
+  <div id="loading" class="loading">⏳ Загружаю данные...</div>
+  <div id="content" style="display:none">
+    <div class="balance-big">
+      <div class="bal-label">Мой баланс</div>
+      <div class="bal-value" id="balValue">0 zł</div>
+      <div class="bal-sub" id="balSub"></div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat"><div class="stat-label">Поездок</div><div class="stat-val" id="sRides" style="color:var(--blue)">0</div></div>
+      <div class="stat"><div class="stat-label">Оплачено</div><div class="stat-val" id="sPaid" style="color:var(--green)">0 zł</div></div>
+      <div class="stat"><div class="stat-label">Стоимость</div><div class="stat-val" id="sCost" style="color:var(--muted)">0 zł</div></div>
+      <div class="stat"><div class="stat-label">Цена поездки</div><div class="stat-val" style="color:var(--accent)">7.50 zł</div></div>
+    </div>
+    <div class="section-title">История</div>
+    <div class="entries" id="entriesList"></div>
+  </div>
+  <button class="refresh-btn" onclick="load()">🔄 Обновить</button>
+</div>
+<script>
+const REPO = 'incsivak-ai/poezdki';
+const FILE = 'data.json';
+const NAME = 'Максим';
+
+function fmt(n) { return n.toFixed(2) + ' zł'; }
+function fmtDate(d) { if(!d) return ''; const [y,m,day]=d.split('-'); return `${day}.${m}.${y}`; }
+
+async function load() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('content').style.display = 'none';
+  try {
+    const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`, {
+      headers: { Accept: 'application/vnd.github.v3+json' }
+    });
+    if (!r.ok) { showEmpty(); return; }
+    const d = await r.json();
+    const all = JSON.parse(atob(d.content.replace(/\n/g,'')));
+    render(all.filter(e => e.person === NAME));
+  } catch(e) { showEmpty(); }
+}
+
+function showEmpty() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+  document.getElementById('entriesList').innerHTML = '<div class="empty">Данных пока нет</div>';
+}
+
+function render(entries) {
+  let paid=0, cost=0, rides=0;
+  entries.forEach(e => {
+    if(e.type==='ride'){cost+=e.cost;rides+=e.count;}
+    else paid+=e.amount;
+  });
+  const bal = paid - cost;
+  const balEl = document.getElementById('balValue');
+  balEl.textContent = (bal>=0?'+':'')+fmt(bal);
+  balEl.style.color = bal>0?'var(--green)':bal<0?'var(--red)':'var(--accent)';
+  document.getElementById('balSub').textContent = bal>0?'✅ Есть остаток':bal<0?`⚠️ Долг: ${fmt(Math.abs(bal))}`:'Всё ровно';
+  document.getElementById('sRides').textContent = rides;
+  document.getElementById('sPaid').textContent = fmt(paid);
+  document.getElementById('sCost').textContent = fmt(cost);
+  const list = document.getElementById('entriesList');
+  if(entries.length===0){ list.innerHTML='<div class="empty">Поездок пока нет</div>'; }
+  else list.innerHTML = entries.map(e=>`
+    <div class="entry ${e.type}">
+      <div class="entry-icon">${e.type==='ride'?'🚗':'💵'}</div>
+      <div>
+        <div class="entry-date">${fmtDate(e.date)}</div>
+        <div class="entry-desc">${e.type==='ride'?e.dir:'Оплата'}</div>
+      </div>
+      <div class="entry-amount">${e.type==='ride'?'−'+fmt(e.cost):'+'+fmt(e.amount)}</div>
+    </div>`).join('');
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+}
+
+load();
+</script>
+</body>
+</html>
