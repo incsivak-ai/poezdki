@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>🚗 Поездки — Управление</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Manrope:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0c0c10;
+  --card: #15151c;
+  --border: #252530;
+  --accent: #f7c948;
+  --accent2: #e87c3e;
+  --blue: #5b8ef7;
+  --green: #4ecb8c;
+  --red: #e85b5b;
+  --text: #eeeef2;
+  --muted: #6b6b80;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Manrope', sans-serif; min-height: 100vh; padding: 20px 16px 80px; }
+
+/* AUTH */
+#authScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 20px; }
+#authScreen h1 { font-family: 'Unbounded', sans-serif; font-size: 1.4rem; background: linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+#authScreen input { background: var(--card); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-family: 'Manrope', sans-serif; font-size: 1rem; padding: 14px 18px; width: 260px; outline: none; text-align: center; letter-spacing: 4px; }
+#authScreen button { background: linear-gradient(90deg,var(--accent),var(--accent2)); border: none; border-radius: 12px; color: #0c0c10; font-family: 'Unbounded', sans-serif; font-size: 0.8rem; font-weight: 700; padding: 14px 32px; cursor: pointer; }
+#authError { color: var(--red); font-size: 0.85rem; }
+
+/* APP */
+#app { display: none; max-width: 480px; margin: 0 auto; }
+header { text-align: center; margin-bottom: 24px; }
+header h1 { font-family: 'Unbounded', sans-serif; font-size: 1.3rem; font-weight: 900; background: linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+header p { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
+.badge { display:inline-block; margin-top:8px; background:var(--card); border:1px solid var(--accent); color:var(--accent); font-family:'Unbounded',sans-serif; font-size:0.65rem; padding:3px 12px; border-radius:20px; letter-spacing:1px; }
+.saving { font-size:0.75rem; color:var(--muted); margin-top:6px; min-height:18px; }
+
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+.sum-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; }
+.sum-card label { font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:6px; }
+.sum-card .val { font-family:'Unbounded',sans-serif; font-size:1.3rem; font-weight:700; }
+
+.breakdown { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px; margin-bottom:16px; }
+.breakdown-title { font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:14px; }
+.p-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); }
+.p-row:last-child { border-bottom:none; }
+.p-name { font-weight:700; font-size:0.95rem; }
+.p-sub { font-size:0.72rem; color:var(--muted); margin-top:2px; }
+.p-bal { font-family:'Unbounded',sans-serif; font-size:1rem; font-weight:700; text-align:right; }
+.p-bal-label { font-size:0.65rem; color:var(--muted); text-align:right; }
+
+.tabs { display:grid; grid-template-columns:1fr 1fr; background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; margin-bottom:16px; }
+.tab-btn { padding:12px; background:transparent; border:none; color:var(--muted); font-family:'Unbounded',sans-serif; font-size:0.7rem; cursor:pointer; transition:all .2s; letter-spacing:.5px; }
+.tab-btn.active { background:var(--border); color:var(--text); }
+.tab-btn:first-child { border-right:1px solid var(--border); }
+
+.form-card { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:18px; margin-bottom:16px; }
+.form-section-title { font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; }
+.person-toggle { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+.p-btn { padding:11px; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--muted); font-weight:700; font-size:0.9rem; cursor:pointer; transition:all .2s; }
+.p-btn.active { border-color:var(--accent); background:#1e1c0e; color:var(--accent); }
+.field-label { font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; display:block; margin-bottom:6px; }
+input[type=date], input[type=number] { background:var(--bg); border:1px solid var(--border); border-radius:10px; color:var(--text); font-family:'Manrope',sans-serif; font-size:0.95rem; padding:10px 14px; width:100%; outline:none; color-scheme:dark; }
+.dir-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+.dir-btn { padding:11px 8px; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--muted); font-size:0.85rem; cursor:pointer; transition:all .2s; text-align:center; }
+.dir-btn.active { border-color:var(--blue); background:#131a2e; color:var(--blue); }
+.btn-primary { width:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border:none; border-radius:12px; color:#0c0c10; font-family:'Unbounded',sans-serif; font-size:0.75rem; font-weight:700; padding:14px; cursor:pointer; margin-top:4px; letter-spacing:.5px; }
+.btn-secondary { width:100%; background:transparent; border:1px solid var(--green); border-radius:12px; color:var(--green); font-family:'Unbounded',sans-serif; font-size:0.75rem; font-weight:700; padding:13px; cursor:pointer; letter-spacing:.5px; }
+.divider { border-top:1px solid var(--border); margin:16px 0; }
+
+.hist-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.hist-title { font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+.clear-btn { background:none; border:1px solid var(--red); color:var(--red); font-size:0.68rem; padding:4px 10px; border-radius:8px; cursor:pointer; }
+.entries { display:flex; flex-direction:column; gap:8px; }
+.entry { background:var(--card); border:1px solid var(--border); border-radius:13px; padding:13px 14px; display:flex; align-items:center; gap:11px; animation:slideIn .2s ease; }
+.entry.payment { background:#121b18; border-color:#1d3327; }
+@keyframes slideIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+.entry-icon { width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:1.05rem; flex-shrink:0; }
+.entry.ride .entry-icon { background:#1e2535; }
+.entry.payment .entry-icon { background:#1a2e24; }
+.entry-info { flex:1; min-width:0; }
+.entry-date { font-size:0.72rem; color:var(--muted); }
+.entry-desc { font-size:0.88rem; font-weight:600; }
+.entry-person { font-size:0.68rem; color:var(--muted); }
+.entry-amount { font-family:'Unbounded',sans-serif; font-size:0.9rem; font-weight:700; flex-shrink:0; }
+.entry.ride .entry-amount { color:var(--blue); }
+.entry.payment .entry-amount { color:var(--green); }
+.del-btn { background:none; border:none; color:var(--border); cursor:pointer; font-size:1rem; padding:3px; flex-shrink:0; transition:color .2s; }
+.del-btn:hover { color:var(--red); }
+.empty { text-align:center; color:var(--muted); padding:36px 0; font-size:0.9rem; }
+.mb12 { margin-bottom:12px; }
+.mb16 { margin-bottom:16px; }
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="authScreen">
+  <div style="font-size:3rem">🚗</div>
+  <h1>Поездки</h1>
+  <p style="color:var(--muted);font-size:0.85rem">Введи пароль для входа</p>
+  <input type="password" id="pwInput" placeholder="••••••" onkeydown="if(event.key==='Enter')checkPw()">
+  <button onclick="checkPw()">Войти</button>
+  <div id="authError"></div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <h1>🚗 Поездки</h1>
+    <p>Максим и Юля</p>
+    <div class="badge">1 поездка = 7.50 zł</div>
+    <div class="saving" id="savingMsg"></div>
+  </header>
+
+  <!-- SUMMARY -->
+  <div class="grid2">
+    <div class="sum-card"><label>Получено</label><div class="val" id="sTotalPaid" style="color:var(--green)">0 zł</div></div>
+    <div class="sum-card"><label>Стоимость</label><div class="val" id="sTotalCost" style="color:var(--blue)">0 zł</div></div>
+    <div class="sum-card"><label>Баланс</label><div class="val" id="sBalance">0 zł</div></div>
+    <div class="sum-card"><label>Поездок</label><div class="val" id="sTotalRides" style="color:var(--accent2)">0</div></div>
+  </div>
+
+  <!-- BREAKDOWN -->
+  <div class="breakdown">
+    <div class="breakdown-title">По пассажирам</div>
+    <div class="p-row">
+      <div><div class="p-name">Максим</div><div class="p-sub" id="maxSub">0 поездок</div></div>
+      <div><div class="p-bal" id="maxBal">0 zł</div><div class="p-bal-label">баланс</div></div>
+    </div>
+    <div class="p-row">
+      <div><div class="p-name">Юля</div><div class="p-sub" id="julSub">0 поездок</div></div>
+      <div><div class="p-bal" id="julBal">0 zł</div><div class="p-bal-label">баланс</div></div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" id="tabAdd" onclick="setTab('add')">➕ Добавить</button>
+    <button class="tab-btn" id="tabHist" onclick="setTab('hist')">📋 История</button>
+  </div>
+
+  <!-- ADD TAB -->
+  <div id="panelAdd">
+    <div class="form-card">
+      <div class="form-section-title">Пассажир</div>
+      <div class="person-toggle">
+        <button class="p-btn active" id="pMaxim" onclick="setPerson('Максим')">Максим</button>
+        <button class="p-btn" id="pYulya" onclick="setPerson('Юля')">Юля</button>
+      </div>
+
+      <label class="field-label">Дата поездки</label>
+      <input type="date" id="rideDate" class="mb16">
+
+      <label class="field-label mb12">Направление</label>
+      <div class="dir-grid">
+        <button class="dir-btn active" id="dThere" onclick="setDir('туда')">➡️ Туда</button>
+        <button class="dir-btn" id="dBack" onclick="setDir('обратно')">⬅️ Обратно</button>
+      </div>
+      <button class="dir-btn" id="dBoth" onclick="setDir('оба')" style="width:100%;margin-bottom:16px">🔄 Туда и обратно (15.00 zł)</button>
+
+      <button class="btn-primary" onclick="addRide()">+ Добавить поездку</button>
+
+      <div class="divider"></div>
+      <div class="form-section-title">💰 Записать оплату</div>
+      <div class="grid2 mb12">
+        <div><label class="field-label">Сумма (zł)</label><input type="number" id="payAmt" placeholder="0.00" step="0.5" min="0"></div>
+        <div><label class="field-label">Дата</label><input type="date" id="payDate"></div>
+      </div>
+      <button class="btn-secondary" onclick="addPayment()">✓ Записать оплату</button>
+    </div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div id="panelHist" style="display:none">
+    <div class="hist-header">
+      <div class="hist-title">Все записи</div>
+      <button class="clear-btn" onclick="clearAll()">Очистить всё</button>
+    </div>
+    <div class="entries" id="entriesList"></div>
+  </div>
+</div>
+
+<script>
+const GITHUB_TOKEN = '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';
+const REPO = 'incsivak-ai/poezdki';
+const FILE = 'data.json';
+const PASSWORD = 'incsivak2024';
+const PRICE = 7.5;
+
+let entries = [];
+let fileSha = null;
+let person = 'Максим';
+let dir = 'туда';
+
+// ── Today ──
+function today() { return new Date().toISOString().split('T')[0]; }
+function fmt(n) { return n.toFixed(2) + ' zł'; }
+function fmtDate(d) { if(!d) return ''; const [y,m,day]=d.split('-'); return `${day}.${m}.${y}`; }
+
+// ── Auth ──
+function checkPw() {
+  const v = document.getElementById('pwInput').value;
+  if (v === PASSWORD) {
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    init();
+  } else {
+    document.getElementById('authError').textContent = 'Неверный пароль';
+  }
+}
+
+// ── GitHub API ──
+async function ghGet() {
+  const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`, {
+    headers: { Authorization: `token ${GITHUB_TOKEN}`, Accept: 'application/vnd.github.v3+json' }
+  });
+  if (r.status === 404) return null;
+  const d = await r.json();
+  fileSha = d.sha;
+  return JSON.parse(atob(d.content.replace(/\n/g,'')));
+}
+
+async function ghSave(data) {
+  setSaving('💾 Сохраняю...');
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+  const body = { message: 'update data', content, ...(fileSha ? {sha: fileSha} : {}) };
+  const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`, {
+    method: 'PUT',
+    headers: { Authorization: `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  const d = await r.json();
+  fileSha = d.content?.sha;
+  setSaving('✅ Сохранено');
+  setTimeout(() => setSaving(''), 2000);
+}
+
+function setSaving(msg) { document.getElementById('savingMsg').textContent = msg; }
+
+// ── Init ──
+async function init() {
+  document.getElementById('rideDate').value = today();
+  document.getElementById('payDate').value = today();
+  setSaving('⏳ Загружаю...');
+  const data = await ghGet();
+  if (data) entries = data;
+  setSaving('');
+  render();
+}
+
+// ── UI controls ──
+function setTab(t) {
+  document.getElementById('tabAdd').classList.toggle('active', t==='add');
+  document.getElementById('tabHist').classList.toggle('active', t==='hist');
+  document.getElementById('panelAdd').style.display = t==='add' ? 'block' : 'none';
+  document.getElementById('panelHist').style.display = t==='hist' ? 'block' : 'none';
+}
+
+function setPerson(p) {
+  person = p;
+  document.getElementById('pMaxim').classList.toggle('active', p==='Максим');
+  document.getElementById('pYulya').classList.toggle('active', p==='Юля');
+}
+
+function setDir(d) {
+  dir = d;
+  ['dThere','dBack','dBoth'].forEach(id => document.getElementById(id).classList.remove('active'));
+  const map = {'туда':'dThere','обратно':'dBack','оба':'dBoth'};
+  document.getElementById(map[d]).classList.add('active');
+}
+
+// ── Actions ──
+async function addRide() {
+  const date = document.getElementById('rideDate').value;
+  if (!date) return alert('Выберите дату');
+  const count = dir === 'оба' ? 2 : 1;
+  const label = dir==='туда' ? '➡️ Туда' : dir==='обратно' ? '⬅️ Обратно' : '🔄 Туда и обратно';
+  entries.unshift({ id: Date.now(), type:'ride', person, date, dir:label, cost:count*PRICE, count });
+  render();
+  await ghSave(entries);
+  setTab('hist');
+}
+
+async function addPayment() {
+  const amount = parseFloat(document.getElementById('payAmt').value);
+  const date = document.getElementById('payDate').value;
+  if (!amount || amount<=0) return alert('Введите сумму');
+  if (!date) return alert('Выберите дату');
+  entries.unshift({ id: Date.now(), type:'payment', person, date, amount });
+  document.getElementById('payAmt').value = '';
+  render();
+  await ghSave(entries);
+  setTab('hist');
+}
+
+async function deleteEntry(id) {
+  entries = entries.filter(e => e.id !== id);
+  render();
+  await ghSave(entries);
+}
+
+async function clearAll() {
+  if (!confirm('Удалить все записи?')) return;
+  entries = [];
+  render();
+  await ghSave(entries);
+}
+
+// ── Render ──
+function render() {
+  let totalPaid=0, totalCost=0, totalRides=0;
+  let maxPaid=0, maxCost=0, maxRides=0;
+  let julPaid=0, julCost=0, julRides=0;
+
+  entries.forEach(e => {
+    if (e.type==='ride') {
+      totalCost+=e.cost; totalRides+=e.count;
+      if(e.person==='Максим'){maxCost+=e.cost;maxRides+=e.count;}
+      else{julCost+=e.cost;julRides+=e.count;}
+    } else {
+      totalPaid+=e.amount;
+      if(e.person==='Максим') maxPaid+=e.amount; else julPaid+=e.amount;
+    }
+  });
+
+  const bal = totalPaid - totalCost;
+  const maxB = maxPaid - maxCost;
+  const julB = julPaid - julCost;
+
+  const balColor = v => v>0?'var(--green)':v<0?'var(--red)':'var(--accent)';
+
+  document.getElementById('sTotalPaid').textContent = fmt(totalPaid);
+  document.getElementById('sTotalCost').textContent = fmt(totalCost);
+  document.getElementById('sTotalRides').textContent = totalRides;
+  const bEl = document.getElementById('sBalance');
+  bEl.textContent = (bal>=0?'+':'')+fmt(bal);
+  bEl.style.color = balColor(bal);
+
+  document.getElementById('maxSub').textContent = `${maxRides} поезд. · ${fmt(maxPaid)} оплачено`;
+  document.getElementById('julSub').textContent = `${julRides} поезд. · ${fmt(julPaid)} оплачено`;
+
+  const setB = (id, v) => {
+    const el = document.getElementById(id);
+    el.textContent = (v>=0?'+':'')+fmt(v);
+    el.style.color = balColor(v);
+  };
+  setB('maxBal', maxB);
+  setB('julBal', julB);
+
+  // Entries list
+  const list = document.getElementById('entriesList');
+  if (entries.length === 0) {
+    list.innerHTML = '<div class="empty">Записей пока нет</div>';
+    return;
+  }
+  list.innerHTML = entries.map(e => `
+    <div class="entry ${e.type}">
+      <div class="entry-icon">${e.type==='ride'?'🚗':'💵'}</div>
+      <div class="entry-info">
+        <div class="entry-date">${fmtDate(e.date)}</div>
+        <div class="entry-desc">${e.type==='ride'?e.dir:'Оплата'}</div>
+        <div class="entry-person">${e.person}</div>
+      </div>
+      <div class="entry-amount">${e.type==='ride'?'−'+fmt(e.cost):'+'+fmt(e.amount)}</div>
+      <button class="del-btn" onclick="deleteEntry(${e.id})">✕</button>
+    </div>`).join('');
+}
+</script>
+</body>
+</html>
